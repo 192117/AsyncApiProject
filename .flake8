@@ -1,0 +1,5 @@
+[flake8]
+max-line-length = 120
+exclude = .venv,
+ignore = A003, VNE003, VNE001, CCE001
+extend-immutable-calls = Depends, fastapi.Depends, fastapi.params.Depends
