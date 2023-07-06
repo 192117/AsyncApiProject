@@ -54,8 +54,8 @@ async def film_search(
             )
 async def film_details(
         film_id: str,
-        film_service: FilmService = Depends(get_film_service)) -> FilmDetail:
-    film = await film_service.get_by_id(film_id)
+        film_detail: FilmService = Depends(get_film_service)) -> FilmDetail:
+    film = await film_detail.get_by_id(film_id)
     if not film:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='film not found')
     return FilmDetail(id=film.id, title=film.title, imdb_rating=film.imdb_rating, description=film.description,
@@ -73,8 +73,8 @@ async def film_list(
         page_size: int = 50,
         page_number: int = 1,
         genre_name: str | None = None,
-        films_service: FilmsService = Depends(get_films_service)) -> List[Films]:
-    films = await films_service.get_films(page_size, page_number, genre_name)
+        film_list: FilmsService = Depends(get_films_service)) -> List[Films]:
+    films = await film_list.get_films(page_size, page_number, genre_name)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='films over')
     return [Films(id=film.id, title=film.title, imdb_rating=film.imdb_rating) for film in films]

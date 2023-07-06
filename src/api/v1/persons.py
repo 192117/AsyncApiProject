@@ -54,8 +54,8 @@ async def person_search(
             )
 async def person_details(
         person_id: str,
-        person_service: PersonService = Depends(get_person_service)) -> Person:
-    person = await person_service.get_by_id(person_id)
+        person_detail: PersonService = Depends(get_person_service)) -> Person:
+    person = await person_detail.get_by_id(person_id)
     if not person:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='person not found')
     return Person(id=person.id, full_name=person.full_name, films=person.films)
@@ -68,12 +68,12 @@ async def person_details(
             response_description='Список фильмов, в которых персона была актером с краткой информацией о них',
             tags=['Персоны'],
             )
-async def film_search(
+async def person_film(
         person_id: str,
         page_size: int = 50,
         page_number: int = 1,
-        person_film_search: SearchPersonFilmService = Depends(search_person_films_service)) -> List[Films]:
-    films = await person_film_search.search_film(person_id, page_size, page_number)
+        person_film: SearchPersonFilmService = Depends(search_person_films_service)) -> List[Films]:
+    films = await person_film.search_film(person_id, page_size, page_number)
     if not films:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='films not found')
     return [Films(id=film.id, title=film.title, imdb_rating=film.imdb_rating) for film in films]

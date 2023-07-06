@@ -22,10 +22,10 @@ class Genre(BaseModel):
             response_description='Полная информация о жанре',
             tags=['Жанры'],
             )
-async def person_details(
+async def genre_details(
         genres_id: str,
-        genre_service: GenreService = Depends(get_genre_service)) -> Genre:
-    genre = await genre_service.get_by_id(genres_id)
+        genre_detail: GenreService = Depends(get_genre_service)) -> Genre:
+    genre = await genre_detail.get_by_id(genres_id)
     if not genre:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='genre not found')
     return Genre(id=genre.id, name=genre.name)
@@ -41,8 +41,8 @@ async def person_details(
 async def genre_list(
         page_size: int = 50,
         page_number: int = 1,
-        genres_service: GenresService = Depends(get_genres_service)) -> List[Genre]:
-    genres = await genres_service.get_genres(page_size, page_number)
+        genre_list: GenresService = Depends(get_genres_service)) -> List[Genre]:
+    genres = await genre_list.get_genres(page_size, page_number)
     if not genres:
         raise HTTPException(status_code=HTTPStatus.NOT_FOUND, detail='genres over')
     return [Genre(id=genre.id, name=genre.name, description=genre.description) for genre in genres]

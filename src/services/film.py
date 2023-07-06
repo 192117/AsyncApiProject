@@ -28,7 +28,7 @@ class FilmService:
         self.elastic = elastic
 
     async def get_by_id(self, film_id: str) -> Optional[Film]:
-        film = await self._film_from_cache(film_id)
+        film = await self._get_film_from_cache(film_id)
         if not film:
             film = await self._get_film_from_elastic(film_id)
             if not film:
@@ -43,7 +43,7 @@ class FilmService:
             return None
         return Film(**doc['_source'])
 
-    async def _film_from_cache(self, film_id: str) -> Optional[Film]:
+    async def _get_film_from_cache(self, film_id: str) -> Optional[Film]:
         data = await self.redis.get(film_id)
         if not data:
             return None
@@ -73,7 +73,7 @@ class FilmsService:
             }
         else:
             filter = None
-        films = await self._films_from_cache(genre_name, page_size, page_number)
+        films = await self._get_films_from_cache(genre_name, page_size, page_number)
         if not films:
             films = await self._get_films_from_elastic(sort_list, page_size, page_number, filter)
             if not films:
@@ -94,7 +94,7 @@ class FilmsService:
             return None
         return [Film(**film['_source']) for film in docs['hits']['hits']]
 
-    async def _films_from_cache(self, genre_name: str, page_size: int, page_number: int) -> Optional[List[Film]]:
+    async def _get_films_from_cache(self, genre_name: str, page_size: int, page_number: int) -> Optional[List[Film]]:
         data = await self.redis.get(f'{page_size}-{page_number}-{genre_name}')
         if not data:
             return None
@@ -119,12 +119,12 @@ class SearchService:
                 ],
             },
         }
-        films = await self._get_films_from_cache(query, page_size, page_number)
+        films = await self._get_film_from_cache(query, page_size, page_number)
         if not films:
             films = await self._search_film_from_elastic(query_search, page_size, page_number)
             if not films:
                 return None
-            await self._put_search_films_to_cache(films, query, page_size, page_number)
+            await self._put_search_film_to_cache(films, query, page_size, page_number)
         return films
 
     async def _search_film_from_elastic(self, query_s: FilmQuery,
@@ -136,13 +136,13 @@ class SearchService:
             return None
         return [Film(**film['_source']) for film in docs['hits']['hits']]
 
-    async def _get_films_from_cache(self, query: str, page_size: int, page_number: int) -> Optional[List[Film]]:
+    async def _get_film_from_cache(self, query: str, page_size: int, page_number: int) -> Optional[List[Film]]:
         data = await self.redis.get(f'{query}-{page_size}-{page_number}')
         if not data:
             return None
         return [Film(**film) for film in orjson.loads(data)]
 
-    async def _put_search_films_to_cache(self, films: List[Film], query: str, page_size: int, page_number: int):
+    async def _put_search_film_to_cache(self, films: List[Film], query: str, page_size: int, page_number: int):
         await self.redis.set(f'{query}-{page_size}-{page_number}',
                              orjson.dumps([film.dict() for film in films]), FILM_CACHE_EXPIRE_IN_SECONDS)
 

@@ -20,7 +20,7 @@ class GenreService:
         self.elastic = elastic
 
     async def get_by_id(self, genre_id: str) -> Optional[Genre]:
-        genre = await self._genre_from_cache(genre_id)
+        genre = await self._get_genre_from_cache(genre_id)
         if not genre:
             genre = await self._get_genre_from_elastic(genre_id)
             if not genre:
@@ -35,7 +35,7 @@ class GenreService:
             return None
         return Genre(**doc['_source'])
 
-    async def _genre_from_cache(self, genre_id: str) -> Optional[Genre]:
+    async def _get_genre_from_cache(self, genre_id: str) -> Optional[Genre]:
         data = await self.redis.get(genre_id)
         if not data:
             return None
@@ -52,7 +52,7 @@ class GenresService:
         self.elastic = elastic
 
     async def get_genres(self, page_size: int, page_number: int) -> Optional[List[Genre]]:
-        genres = await self._genres_from_cache(page_size, page_number)
+        genres = await self._get_genres_from_cache(page_size, page_number)
         if not genres:
             genres = await self._get_genres_from_elastic(page_size, page_number)
             if not genres:
@@ -68,7 +68,7 @@ class GenresService:
             return None
         return [Genre(**genre['_source']) for genre in docs['hits']['hits']]
 
-    async def _genres_from_cache(self, page_size: int, page_number: int) -> Optional[List[Genre]]:
+    async def _get_genres_from_cache(self, page_size: int, page_number: int) -> Optional[List[Genre]]:
         data = await self.redis.get(f'{page_size}-{page_number}')
         if not data:
             return None

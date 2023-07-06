@@ -44,7 +44,7 @@ class PersonService:
             return None
         return Person(**doc['_source'])
 
-    async def _person_from_cache(self, person_id: str) -> Optional[Person]:
+    async def _get_person_from_cache(self, person_id: str) -> Optional[Person]:
         data = await self.redis.get(person_id)
         if not data:
             return None
@@ -60,7 +60,7 @@ class SearchPersonService:
         self.redis = redis
         self.elastic = elastic
 
-    async def search_person(self, query: str, page_size: int, page_number: int) -> Optional[Person]:
+    async def search_persons(self, query: str, page_size: int, page_number: int) -> Optional[Person]:
         query_search = {
             'match': {
                 'full_name': {
@@ -71,14 +71,14 @@ class SearchPersonService:
         }
         persons = await self._get_persons_from_cache(query, page_size, page_number)
         if not persons:
-            persons = await self._search_person_from_elastic(query_search, page_size, page_number)
+            persons = await self._search_persons_from_elastic(query_search, page_size, page_number)
             if not persons:
                 return None
-            await self._put_search_person_to_cache(persons, query, page_size, page_number)
+            await self._put_persons_to_cache(persons, query, page_size, page_number)
         return persons
 
-    async def _search_person_from_elastic(self, query_s: PersonQuery,
-                                          page_size: int, page_number: int) -> Optional[List[Person]]:
+    async def _search_persons_from_elastic(self, query_s: PersonQuery,
+                                           page_size: int, page_number: int) -> Optional[List[Person]]:
         try:
             docs = await self.elastic.search(index=config.ELASTIC_SCHEME_PERSONS, query=query_s,
                                              from_=page_size * (page_number - 1), size=page_size)
@@ -92,7 +92,7 @@ class SearchPersonService:
             return None
         return [Person(**person) for person in orjson.loads(data)]
 
-    async def _put_search_person_to_cache(self, persons: List[Person], query: str, page_size: int, page_number: int):
+    async def _put_persons_to_cache(self, persons: List[Person], query: str, page_size: int, page_number: int):
         await self.redis.set(f'{query}-{page_size}-{page_number}',
                              orjson.dumps([person.dict() for person in persons]), PERSON_CACHE_EXPIRE_IN_SECONDS)
 
